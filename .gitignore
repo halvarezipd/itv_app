@@ -75,7 +75,8 @@ celerybeat-schedule.*
 # SageMath parsed files 
 *.sage.py 
 
-# Environments 
+# Environments
+env
 .env 
 .venv 
 env/ 
@@ -126,3 +127,9 @@ team_members/migrations/0005_alter_areamanager_manager_company_image.py
 team_members/migrations/0006_alter_areamanager_manager_email.py
 pgadmin-env.list
 team_members/migrations/0007_teammember_team_member_last_updated_location_time_parsed.py
+.idea/itv_app.iml
+.idea/misc.xml
+.idea/.gitignore
+.idea/modules.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml

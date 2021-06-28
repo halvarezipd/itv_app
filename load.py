@@ -15,7 +15,6 @@ django.setup()
 from team_members.models import TeamMember, MemberLocation, AreaManager
 from jobs.models import Job, JobPhase
 
-
 today_date = date.today()
 login_url = "https://api.infinityteamview.com/user_login"  # for login
 job_fleet_url = "https://api.infinityteamview.com/get_task_view_and_fleet_details"
@@ -53,20 +52,22 @@ job_fleet_headers = {  # Headers for Job_and_fleet_url
     b"Sec-Fetch-Site": b"same-site"
 }
 
-area_manager_headers = {b'accept': b'application/json, text/plain, */*', b'accept-language': b'en', b'content-type': b'application/x-www-form-urlencoded', 
-                        b'sec-fetch-dest': b'empty', 'sec-fetch-mode': b'cors', b'sec-fetch-site': b'same-site', b'sec-gpc': b'1', 
-                        b'referrer': b'https://dashboard.infinityteamview.com/', b'referrerPolicy': b'origin', b'mode': b'cors', b'credentials': b'omit'}
+area_manager_headers = {b'accept': b'application/json, text/plain, */*', b'accept-language': b'en',
+                        b'content-type': b'application/x-www-form-urlencoded',
+                        b'sec-fetch-dest': b'empty', 'sec-fetch-mode': b'cors', b'sec-fetch-site': b'same-site',
+                        b'sec-gpc': b'1',
+                        b'referrer': b'https://dashboard.infinityteamview.com/', b'referrerPolicy': b'origin',
+                        b'mode': b'cors', b'credentials': b'omit'}
 
 login_data = {  # data for url
     b"email": b"appadmin@infinityplumbingdesigns.com",
-    b"password": b"infinityplumbing",
+    b"password": b"sabinelongingskips",
     b"timezone": b"480",
     b"gzip": b"1",
 }
- 
- 
- # data for fleet url
-job_fleet_data = { 
+
+# data for fleet url
+job_fleet_data = {
     b"user_id": b"1",
     b"date": today_date,
     b"today": b"1",
@@ -75,7 +76,6 @@ job_fleet_data = {
     b"is_offline": b"1",
     b"team_id": b"0",
 }
-
 
 
 def get_login():  # Logs in and adds access token to the
@@ -104,7 +104,6 @@ def get_area_managers(url=area_manager_url, headers=area_manager_headers):
     data["access_token"] = str(get_login()["data"]["access_token"])
     r = requests.post(url, headers=headers, data=data).json()["data"]
     return r
-    
 
 
 def get_fleets():
@@ -128,13 +127,13 @@ def load_jobs_initial():
         itv_job_manager_picture = job["jobs"][0]["company_image"]
         job_id = job["jobs"][0]["hash_job_id"][:3]
         job_phase_name = job["jobs"][0]["job_name"]
-        job_location = fromstr(f'POINT({longitude} {latitude})', srid=4326) # setup variable to save location
+        job_location = fromstr(f'POINT({longitude} {latitude})', srid=4326)  # setup variable to save location
         job_address = job["jobs"][0]["address"]
         job_city = job["jobs"][0]["city_name"]
         job_started = job["jobs"][0]["job_pickup_datetime"]
         job_app_end_date = job["jobs"][0]["job_delivery_datetime"]
         job_name = job["jobs"][0]["job_name"].upper()
-        
+
         # Clean the name of the job
         if "PH" in job_name:
             new_job_name = job_name[:job_name.find(" PH")]
@@ -144,16 +143,15 @@ def load_jobs_initial():
             new_job_name = job_name[:job_name.find(" MODEL")]
         else:
             new_job_name = job_name
-        
-        
+
         # If job id smaller than 3 digits save it as id otherwise just the digits after the first three letter
         if len(job["jobs"][0]["hash_job_id"]) > 3:
             job_number = job["jobs"][0]["hash_job_id"][3:]
         else:
-            job_number=job["jobs"][0]["hash_job_id"]
-            
+            job_number = job["jobs"][0]["hash_job_id"]
+
         # try to get the job if it exists and create a phase
-        try: 
+        try:
             add_job_phase = Job.objects.get(job_id=job_id)
             new_phase = JobPhase(
                 phase_job_name=add_job_phase,
@@ -162,8 +160,8 @@ def load_jobs_initial():
                 phase_location=job_location,
             )
             new_phase.save()
-            print(f"New Phase Added to: {add_job_phase.job_name}")        
-        # if the job doesnt exist create it and add the phase
+            print(f"New Phase Added to: {add_job_phase.job_name}")
+            # if the job doesnt exist create it and add the phase
         except Job.DoesNotExist:
             job_area_manager = AreaManager.objects.get(manager_company_image=itv_job_manager_picture)
             new_job = Job(
@@ -186,6 +184,7 @@ def load_jobs_initial():
             create_phase.save()
             print(f"New Job Created: {new_job_name}, New Phase Created: {job_phase_name}")
 
+
 def load_managers():
     area_managers = get_area_managers()
     for manager in area_managers:
@@ -203,6 +202,7 @@ def load_managers():
         new_manager.save()
         print(f"Created: {new_manager.manager_username}")
     print("Finished")
+
 
 def load_fleets_initial():
     fleets = get_fleets()
@@ -236,6 +236,7 @@ def load_fleets_initial():
         new_location.save()
     print("Done")
 
+
 def update_fleets():
     fleets = get_fleets()
     updated = 0
@@ -243,15 +244,17 @@ def update_fleets():
     for key, team_member in fleets.items():
         update_member = TeamMember.objects.get(team_member_id=team_member["fleet_id"])
         try:
-            latest_location_json = json.loads(MemberLocation.objects.annotate(json=AsGeoJSON('team_member_location')).filter(team_member=update_member).last().json)
+            latest_location_json = json.loads(
+                MemberLocation.objects.annotate(json=AsGeoJSON('team_member_location')).filter(
+                    team_member=update_member).last().json)
         except AttributeError:
             continue
         latest_longitude = str(latest_location_json["coordinates"][0])
         latest_latitude = str(latest_location_json["coordinates"][1])
-        
+
         new_latitude = str(team_member["latitude"])[:11]
         new_longitude = str(team_member["longitude"])[:13]
-        
+
         update_member.team_member_status = team_member["status"]
         update_member.team_member_battery_level = team_member["battery_level"]
         update_member.team_member_registration_status = team_member["registration_status"]
@@ -261,12 +264,12 @@ def update_fleets():
         update_member.team_member_has_network = team_member["has_network"]
         update_member.save()
         print(f"Updated: {update_member.team_member_name}")
-        
+
         if latest_latitude in new_latitude or latest_longitude in new_longitude:
             print("locations are the same, continuing.")
             not_updated += 1
             continue
-                
+
         new_location = MemberLocation()
         new_location.team_member = update_member
         if new_longitude != None or new_latitude != None:
@@ -276,12 +279,12 @@ def update_fleets():
         new_location.team_member_location = new_location_point
         new_location.save()
         print(f"Updated: {update_member.team_member_name}'s Location Updated")
-        updated +=1
+        updated += 1
     print("Updated Locations: " + str(updated))
     print("Locations Not Updated: " + str(not_updated))
+
 
 def init_db():
     load_managers()
     load_fleets_initial()
     load_jobs_initial()
-    
